@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import List, NamedTuple
 
 import pandas as pd
@@ -14,10 +15,23 @@ URL = 'http://www.foopee.com/punk/the-list/'
 
 CACHED_CSV = '/tmp/records-for-artists.csv'
 
+MONTH_STR_TO_NUM = {
+    'Jul': 7,
+    'Aug': 8,
+    'Sep': 9,
+    'Oct': 10,
+    'Nov': 11,
+    'Dec': 12,
+}
+
 
 def page_url(num: int) -> str:
     return f'{URL}by-date.{num}.html'
 
+
+def header_to_datetime(header: str) -> datetime:
+    _, month, day = header.split(' ')
+    return datetime(2021, MONTH_STR_TO_NUM[month], int(day))
 
 class ShowRecord(NamedTuple):
     venue: str
@@ -29,7 +43,7 @@ class ShowRecord(NamedTuple):
 def date_entry_generator(response: requests.Response):
     lines = response.text.split('\n')
     it = iter(lines)
-    cur_header = None
+    cur_date = None
     # Go to sections
     for line in it:
         if line == '<UL>':
@@ -44,7 +58,7 @@ def date_entry_generator(response: requests.Response):
                 return
             elt = BeautifulSoup(line, features='html.parser')
             if elt.a.get('name') is not None:
-                cur_header = elt
+                cur_date = elt.b.string
                 break
 
         # For each entry in the section, yield a row
@@ -56,7 +70,7 @@ def date_entry_generator(response: requests.Response):
             artists = [tag.string for tag in row_elt.find_all('a')[1:]]
             tail = row_elt.contents[-1]
             for artist in artists:
-                yield ShowRecord(venue, artist, cur_header.b.string, tail)
+                yield ShowRecord(venue, artist, header_to_datetime(cur_date), tail)
 
 
 def main():
@@ -90,7 +104,6 @@ def main():
                                                       time=record['time'],
                                                       tail=record['tail'])
         session.add(obj)
-
     session.commit()
 
 

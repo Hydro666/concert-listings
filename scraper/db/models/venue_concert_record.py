@@ -10,5 +10,5 @@ class VenueConcertRecord(base.Base):
     id = Column(Integer, primary_key=True)
     venue = Column(String)
     artist = Column(String)
-    time = Column(String)
+    time = Column(DateTime)
     tail = Column(String, nullable=True)
