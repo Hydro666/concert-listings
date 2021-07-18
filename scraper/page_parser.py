@@ -3,7 +3,13 @@ from typing import List, NamedTuple
 
 import pandas as pd
 import requests
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
+
+from scraper.db.models import venue_concert_record
+from scraper.db.models import base
+
 
 URL = 'http://www.foopee.com/punk/the-list/'
 
@@ -68,7 +74,17 @@ def main():
         df = pd.read_csv(CACHED_CSV)
 
     # Write to DB.
-    print(df)
+    engine = create_engine('postgresql://postgres:yourmagicismine@localhost:5432/foopee', echo=True)
+    base.Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    for _, record in df.iterrows():
+        obj = venue_concert_record.VenueConcertRecord(
+            venue=record['venue'], artist=record['artist'], time=record['time'], tail=record['tail'])
+        session.add(obj)
+
+    session.commit()
 
 if __name__ == '__main__':
     main()
