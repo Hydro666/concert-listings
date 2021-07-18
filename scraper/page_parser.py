@@ -40,7 +40,7 @@ def date_entry_generator(response: requests.Response):
             # The presence of a lone '</UL>' when finding a section marks the end of the list.
             if line == '</UL>':
                 return
-            elt = BeautifulSoup(line)
+            elt = BeautifulSoup(line, features='html.parser')
             if elt.a.get('name') is not None:
                 cur_header = elt
                 break
@@ -49,7 +49,7 @@ def date_entry_generator(response: requests.Response):
         for line in it:
             if line == '</UL>':
                 break
-            row_elt = BeautifulSoup(line).li
+            row_elt = BeautifulSoup(line, features='html.parser').li
             venue = row_elt.b.a.string
             artists = [tag.string for tag in row_elt.find_all('a')[1:]]
             tail = row_elt.contents[-1]
@@ -74,7 +74,8 @@ def main():
         df = pd.read_csv(CACHED_CSV)
 
     # Write to DB.
-    engine = create_engine('postgresql://postgres:yourmagicismine@localhost:5432/foopee', echo=True)
+    secret = os.environ['MYPGPASS']
+    engine = create_engine(f'postgresql://postgres:{secret}@localhost:5432/foopee', echo=True)
     base.Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
