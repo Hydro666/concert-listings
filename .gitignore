@@ -148,3 +148,6 @@ Makefile
 
 # You Complete Me File
 .ycm_extra_conf.py
+
+# Jupyter stuff.
+*.ipynb

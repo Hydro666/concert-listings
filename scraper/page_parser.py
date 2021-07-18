@@ -10,19 +10,21 @@ from bs4 import BeautifulSoup
 from scraper.db.models import venue_concert_record
 from scraper.db.models import base
 
-
 URL = 'http://www.foopee.com/punk/the-list/'
 
 CACHED_CSV = '/tmp/records-for-artists.csv'
 
+
 def page_url(num: int) -> str:
     return f'{URL}by-date.{num}.html'
+
 
 class ShowRecord(NamedTuple):
     venue: str
     artist: str
     time: str
     tail: float
+
 
 def date_entry_generator(response: requests.Response):
     lines = response.text.split('\n')
@@ -67,7 +69,8 @@ def main():
             response = requests.get(page_url(i))
             records.extend(date_entry_generator(response))
 
-        df = pd.DataFrame.from_records(records, columns=['venue', 'artist', 'time', 'tail'])
+        df = pd.DataFrame.from_records(
+            records, columns=['venue', 'artist', 'time', 'tail'])
         df.to_csv('/tmp/records-for-artists.csv', index=False)
     else:
         print('Loading old data')
@@ -75,17 +78,21 @@ def main():
 
     # Write to DB.
     secret = os.environ['MYPGPASS']
-    engine = create_engine(f'postgresql://postgres:{secret}@localhost:5432/foopee', echo=True)
+    engine = create_engine(
+        f'postgresql://postgres:{secret}@localhost:5432/foopee', echo=True)
     base.Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
 
     for _, record in df.iterrows():
-        obj = venue_concert_record.VenueConcertRecord(
-            venue=record['venue'], artist=record['artist'], time=record['time'], tail=record['tail'])
+        obj = venue_concert_record.VenueConcertRecord(venue=record['venue'],
+                                                      artist=record['artist'],
+                                                      time=record['time'],
+                                                      tail=record['tail'])
         session.add(obj)
 
     session.commit()
+
 
 if __name__ == '__main__':
     main()

@@ -3,6 +3,7 @@ from sqlalchemy.types import DateTime
 
 from scraper.db.models import base
 
+
 class VenueConcertRecord(base.Base):
     __tablename__ = 'venue-concert-record'
 
