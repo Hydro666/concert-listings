@@ -2,23 +2,10 @@ import os
 from datetime import datetime
 from typing import List, NamedTuple
 
-import pandas as pd
 import requests
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
 
-from scraper.db import sqlite_driver
-from scraper.db.models import venue_concert_record
-from scraper.db.models import base
-
 URL = 'http://www.foopee.com/punk/the-list/'
-
-CACHED_CSV = '/tmp/records-for-artists.csv'
-
-SQLITE_DB = 'foopee'
-
-SQLITE_TABLE = 'venue_concert'
 
 MONTH_STR_TO_NUM = {
     'Jul': 7,
@@ -80,18 +67,10 @@ def date_entry_generator(response: requests.Response):
                                  tail)
 
 
-def main():
-
+def get_records() -> List[ShowRecord]:
     records = []
     # Get the pages as tuples.
     for i in range(26):
         response = requests.get(page_url(i))
         records.extend(date_entry_generator(response))
-
-    # Write to DB.
-    driver = sqlite_driver.SQLiteDriver.make_driver('foopee')
-    driver.write_records(records)
-
-
-if __name__ == '__main__':
-    main()
+    return records
