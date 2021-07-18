@@ -8,12 +8,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from bs4 import BeautifulSoup
 
+from scraper.db import sqlite_driver
 from scraper.db.models import venue_concert_record
 from scraper.db.models import base
 
 URL = 'http://www.foopee.com/punk/the-list/'
 
 CACHED_CSV = '/tmp/records-for-artists.csv'
+
+SQLITE_DB = 'foopee'
+
+SQLITE_TABLE = 'venue_concert'
 
 MONTH_STR_TO_NUM = {
     'Jul': 7,
@@ -32,6 +37,7 @@ def page_url(num: int) -> str:
 def header_to_datetime(header: str) -> datetime:
     _, month, day = header.split(' ')
     return datetime(2021, MONTH_STR_TO_NUM[month], int(day))
+
 
 class ShowRecord(NamedTuple):
     venue: str
@@ -70,41 +76,21 @@ def date_entry_generator(response: requests.Response):
             artists = [tag.string for tag in row_elt.find_all('a')[1:]]
             tail = row_elt.contents[-1]
             for artist in artists:
-                yield ShowRecord(venue, artist, header_to_datetime(cur_date), tail)
+                yield ShowRecord(venue, artist, header_to_datetime(cur_date),
+                                 tail)
 
 
 def main():
 
-    if not os.path.exists(CACHED_CSV):
-        print('Cache not found... fetching data')
-        records = []
-        # Get the pages as tuples.
-        for i in range(26):
-            response = requests.get(page_url(i))
-            records.extend(date_entry_generator(response))
-
-        df = pd.DataFrame.from_records(
-            records, columns=['venue', 'artist', 'time', 'tail'])
-        df.to_csv('/tmp/records-for-artists.csv', index=False)
-    else:
-        print('Loading old data')
-        df = pd.read_csv(CACHED_CSV)
+    records = []
+    # Get the pages as tuples.
+    for i in range(26):
+        response = requests.get(page_url(i))
+        records.extend(date_entry_generator(response))
 
     # Write to DB.
-    secret = os.environ['MYPGPASS']
-    engine = create_engine(
-        f'postgresql://postgres:{secret}@localhost:5432/foopee', echo=True)
-    base.Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-
-    for _, record in df.iterrows():
-        obj = venue_concert_record.VenueConcertRecord(venue=record['venue'],
-                                                      artist=record['artist'],
-                                                      time=record['time'],
-                                                      tail=record['tail'])
-        session.add(obj)
-    session.commit()
+    driver = sqlite_driver.SQLiteDriver.make_driver('foopee')
+    driver.write_records(records)
 
 
 if __name__ == '__main__':
