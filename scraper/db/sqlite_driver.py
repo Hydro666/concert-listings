@@ -1,13 +1,12 @@
-import os
-
 from typing import List, Type, TypeVar
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from scraper import page_parser
 from scraper.db import driver
 from scraper.db.models import base
 from scraper.db.models import venue_concert_record
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 T = TypeVar('T')
 

@@ -1,5 +1,3 @@
-import requests
-
 from scraper import page_parser
 from scraper.db import sqlite_driver
 

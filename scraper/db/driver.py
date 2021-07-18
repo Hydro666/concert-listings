@@ -12,5 +12,5 @@ class DatabaseDriver:
         raise NotImplementedError()
 
     @classmethod
-    def make_driver(cls: Type[T], database_name: str, table_name: str) -> T:
+    def make_driver(cls: Type[T], database_name: str) -> T:
         raise NotImplementedError()
