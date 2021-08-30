@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package scraper;
+
+import "google/protobuf/timestamp.proto";
+
+message ConcertEvent {
+  string venue_name = 1;
+  string artist_name = 2;
+
+  google.protobuf.Timestamp concert_date = 3;
+}

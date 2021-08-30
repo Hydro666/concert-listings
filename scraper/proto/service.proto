@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "scraper/proto/concert_event.proto";
+
+package scraper;
+
+service FooPeeScrapeService {
+  rpc GetConcertsNearPosition(GetConcertsNearPositionRequest) returns (GetConcertsNearPositionResponse);
+}
+
+message GetConcertsNearPositionRequest {
+  float lat = 1;
+  float lon = 2;
+
+  google.protobuf.Timestamp from_time = 3;
+}
+
+message GetConcertsNearPositionResponse {
+}

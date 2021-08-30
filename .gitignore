@@ -151,3 +151,6 @@ Makefile
 
 # Jupyter stuff.
 *.ipynb
+
+# Bazel stuff 
+*bazel*
